@@ -16,6 +16,10 @@ def render_html(store: ExplanationStore) -> str:
     for row in rows:
         files = ", ".join(json.loads(row["files_changed"]))
         context = html.escape(row["context_json"])
+        diff = row["diff_text"] or ""
+        diff_block = ""
+        if diff:
+            diff_block = f"<details open><summary>Diff</summary>{render_diff(diff)}</details>"
         items.append(
             f"""
             <article>
@@ -27,6 +31,7 @@ def render_html(store: ExplanationStore) -> str:
               <p>{html.escape(row['reason'])}</p>
               <p><b>Change:</b> {html.escape(row['change_summary'])}</p>
               <p><b>Files:</b> {html.escape(files or 'none')} | <b>New lines:</b> {row['new_lines']}</p>
+              {diff_block}
               <details><summary>Context</summary><pre>{context}</pre></details>
             </article>
             """
@@ -47,6 +52,11 @@ def render_html(store: ExplanationStore) -> str:
     strong {{ color: #1d3f5f; }}
     em {{ background: #e7efe7; border-radius: 999px; padding: 3px 8px; font-style: normal; }}
     pre {{ overflow: auto; background: #10212b; color: #e8f1f2; padding: 12px; border-radius: 6px; }}
+    .diff {{ overflow: auto; background: #0f1720; color: #d6dde4; padding: 12px; border-radius: 6px; }}
+    .diff-line {{ display: block; white-space: pre; font-family: Consolas, Monaco, monospace; font-size: 14px; line-height: 1.45; }}
+    .diff-add {{ background: #12351f; color: #b9f6c7; }}
+    .diff-del {{ background: #421d1d; color: #ffc4c4; }}
+    .diff-meta {{ color: #93b4d7; }}
   </style>
 </head>
 <body>
@@ -69,6 +79,7 @@ class ExplanationHandler(BaseHTTPRequestHandler):
                 item = dict(row)
                 item["files_changed"] = json.loads(item["files_changed"])
                 item["context"] = json.loads(item.pop("context_json"))
+                item["diff"] = item.pop("diff_text")
                 rows.append(item)
             body = json.dumps(rows, indent=2).encode("utf-8")
             self.send_response(200)
@@ -83,6 +94,20 @@ class ExplanationHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+
+def render_diff(diff_text: str) -> str:
+    lines = []
+    for line in diff_text.splitlines():
+        css = "diff-line"
+        if line.startswith("+") and not line.startswith("+++"):
+            css += " diff-add"
+        elif line.startswith("-") and not line.startswith("---"):
+            css += " diff-del"
+        elif line.startswith("@@") or line.startswith("---") or line.startswith("+++"):
+            css += " diff-meta"
+        lines.append(f'<span class="{css}">{html.escape(line)}</span>')
+    return f'<pre class="diff">{"".join(lines)}</pre>'
 
 
 def parse_args() -> argparse.Namespace:

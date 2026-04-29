@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import difflib
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +18,7 @@ class Explanation:
     files_changed: list[str]
     new_lines: int
     context: dict[str, object]
+    diff_text: str = ""
 
 
 class ExplanationStore:
@@ -45,10 +47,14 @@ class ExplanationStore:
                     change_summary TEXT NOT NULL,
                     files_changed TEXT NOT NULL,
                     new_lines INTEGER NOT NULL,
-                    context_json TEXT NOT NULL
+                    context_json TEXT NOT NULL,
+                    diff_text TEXT NOT NULL DEFAULT ''
                 )
                 """
             )
+            columns = {row["name"] for row in conn.execute("PRAGMA table_info(explanations)")}
+            if "diff_text" not in columns:
+                conn.execute("ALTER TABLE explanations ADD COLUMN diff_text TEXT NOT NULL DEFAULT ''")
 
     def record(self, explanation: Explanation) -> None:
         with self._connect() as conn:
@@ -56,8 +62,8 @@ class ExplanationStore:
                 """
                 INSERT INTO explanations (
                     created_at, agent, step_kind, reason, change_summary,
-                    files_changed, new_lines, context_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    files_changed, new_lines, context_json, diff_text
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     datetime.now(timezone.utc).isoformat(),
@@ -68,6 +74,7 @@ class ExplanationStore:
                     json.dumps(explanation.files_changed),
                     explanation.new_lines,
                     json.dumps(explanation.context, indent=2, sort_keys=True),
+                    explanation.diff_text,
                 ),
             )
 
@@ -77,7 +84,7 @@ class ExplanationStore:
                 conn.execute(
                     """
                     SELECT id, created_at, agent, step_kind, reason, change_summary,
-                           files_changed, new_lines, context_json
+                           files_changed, new_lines, context_json, diff_text
                     FROM explanations
                     ORDER BY id
                     """
@@ -94,3 +101,17 @@ def count_new_lines(before: str | None, after: str) -> int:
 
 def changed_files(paths: Iterable[Path], project_root: Path) -> list[str]:
     return [str(path.relative_to(project_root)) for path in paths]
+
+
+def make_unified_diff(before: str | None, after: str, filename: str) -> str:
+    before_lines = [] if before is None else before.splitlines()
+    after_lines = after.splitlines()
+    return "\n".join(
+        difflib.unified_diff(
+            before_lines,
+            after_lines,
+            fromfile=f"a/{filename}",
+            tofile=f"b/{filename}",
+            lineterm="",
+        )
+    )

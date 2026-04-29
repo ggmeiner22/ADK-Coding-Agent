@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 
 from .agents import AgentContext, AgentResult, CheckResultAndEscalate, LlmAgent, LoopAgent, SequentialAgent
-from .explanations import Explanation, changed_files, count_new_lines
+from .explanations import Explanation, changed_files, count_new_lines, make_unified_diff
 from .tools import JavaTestTool, JavaToolConfig
 
 
@@ -43,15 +43,17 @@ def create_first_version(context: AgentContext) -> AgentResult:
 }
 """
     source_path.write_text(source, encoding="utf-8")
+    source_file = str(source_path.relative_to(context.project_root))
     context.explanation_store.record(
         Explanation(
             agent="first-version",
             step_kind="modularization",
             reason="Use one small Calculator class because the requested task is a compact arithmetic API.",
             change_summary="Created initial production Java source with add and subtract.",
-            files_changed=changed_files([source_path], context.project_root),
+            files_changed=[source_file],
             new_lines=count_new_lines(before, source),
             context={"task": context.task},
+            diff_text=make_unified_diff(before, source, source_file),
         )
     )
     context.explanation_store.record(
@@ -114,15 +116,17 @@ class CalculatorTest {
 }
 """
     test_path.write_text(tests, encoding="utf-8")
+    test_file = str(test_path.relative_to(context.project_root))
     context.explanation_store.record(
         Explanation(
             agent="junit5-tests-devel",
             step_kind="test_design",
             reason="JUnit 5 tests define the expected behavior before each improvement cycle.",
             change_summary="Created CalculatorTest covering add, subtract, multiply, divide, and zero division.",
-            files_changed=changed_files([test_path], context.project_root),
+            files_changed=[test_file],
             new_lines=count_new_lines(before, tests),
             context={"cycle": context.cycle},
+            diff_text=make_unified_diff(before, tests, test_file),
         )
     )
     context.explanation_store.record(
@@ -214,15 +218,17 @@ def improve_code_using_failures(context: AgentContext) -> AgentResult:
         return AgentResult(False, "No known repair rule matched the failure.", escalation="manual_review_required")
 
     source_path.write_text(source, encoding="utf-8")
+    source_file = str(source_path.relative_to(context.project_root))
     context.explanation_store.record(
         Explanation(
             agent="improve-code-using-failures",
             step_kind="code_change",
             reason="Use failed test feedback as incremental context for the next code change.",
             change_summary="Added missing Calculator behavior: " + ", ".join(missing),
-            files_changed=changed_files([source_path], context.project_root),
+            files_changed=[source_file],
             new_lines=count_new_lines(before, source),
             context={"cycle": context.cycle, "failure": tool_result},
+            diff_text=make_unified_diff(before, source, source_file),
         )
     )
     return AgentResult(True, "Code improved from test failures.")

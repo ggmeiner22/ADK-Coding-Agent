@@ -18,14 +18,9 @@ SequentialAgent(
 )
 ```
 
-The explanation database records:
-
-- modularization decisions
-- data structure selection decisions
-- reasons for code changes from compiler/test feedback
-- files changed
-- new-line counts
-- incremental context such as `javac` errors and JUnit results
+The explanation database records modularization decisions, data structure
+choices, code-change reasons, files changed, new-line counts, compiler errors,
+test results, and unified diffs for file changes.
 
 ## Requirements
 
