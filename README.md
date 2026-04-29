@@ -33,24 +33,18 @@ Run these commands from **Command Prompt**.
 
 You need:
 
-- WSL with `python3`
-- WSL with `java` and `javac`
+- `python3`
+- `java` and `javac`
 - The included JUnit jar:
 
 ```text
 tools\junit-platform-console-standalone-1.10.2.jar
 ```
 
-## 1. Open the Project Folder
+## Execution
 
-```cmd
-cd C:\Users\Garrett\Documents\Codex\2026-04-29\milestone-i-implement-a-first-adk
-```
-
-## 2. Run the Agent with Real Java/JUnit
-
-```cmd
-wsl -e bash -lc "cd /mnt/c/Users/Garrett/Documents/Codex/2026-04-29/milestone-i-implement-a-first-adk && python3 -m adk_java_agent.cli --project-root runs/my-demo --junit-jar tools/junit-platform-console-standalone-1.10.2.jar --task \"Create a Calculator class with add, subtract, multiply, and divide\""
+```bash
+python3 -m adk_java_agent.cli --project-root runs/my-demo --junit-jar tools/junit-platform-console-standalone-1.10.2.jar --task \"Create a Calculator class with add, subtract, multiply, and divide\""
 ```
 
 Expected output:
@@ -79,8 +73,8 @@ runs\my-demo\explanations.sqlite
 
 Start the web viewer:
 
-```cmd
-wsl -e bash -lc "cd /mnt/c/Users/Garrett/Documents/Codex/2026-04-29/milestone-i-implement-a-first-adk && python3 -m adk_java_agent.web --db runs/my-demo/explanations.sqlite --port 8765"
+```bash
+python3 -m adk_java_agent.web --db runs/my-demo/explanations.sqlite --port 8765"
 ```
 
 Then open this address in a browser:
@@ -94,11 +88,11 @@ that window to stop the web viewer.
 
 ## Optional: Run Without Java
 
-This mode uses the built-in simulated test tool. It is useful if WSL Java is not
+This mode uses the built-in simulated test tool. It is useful if Java is not
 available, but the real Java/JUnit command above is preferred.
 
-```cmd
-wsl -e bash -lc "cd /mnt/c/Users/Garrett/Documents/Codex/2026-04-29/milestone-i-implement-a-first-adk && python3 -m adk_java_agent.cli --simulate-tools --project-root runs/local-demo --task \"Create a Calculator class with add, subtract, multiply, and divide\""
+```bash
+python3 -m adk_java_agent.cli --simulate-tools --project-root runs/local-demo --task \"Create a Calculator class with add, subtract, multiply, and divide\""
 ```
 
 ## Clean Generated Runs
