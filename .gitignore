@@ -1,0 +1,19 @@
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Generated agent output
+runs/
+*.sqlite
+*.sqlite3
+
+# Local build/test scratch
+.test-runs/
+build/
+manual-build/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
