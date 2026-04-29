@@ -163,9 +163,10 @@ program.
 
 
 ## Contex Demo
-![#1 first-version modularization](images/image-3.png)
-![#2 first-version data_structure_selection](images/image-4.png)
-![#3 junit5-tests-devel test_design](images/image-5.png)
-![#4 and #5](images/image-6.png)
-![#6 and #7](images/image-7.png)
-![#8 and #9](images/image-8.png)
+![alt text](images/start_image.png)
+![alt text](images/image.png)
+![alt text](images/image-1.png)
+![alt text](images/image-2.png)
+![alt text](images/image-3.png)
+![alt text](images/image-4.png)
+![alt text](images/image-5.png)
