@@ -28,28 +28,16 @@ class JavaTestTool:
         return self._run_real_junit(project_root)
 
     def _simulate(self, project_root: Path) -> dict[str, object]:
-        source = project_root / "src" / "main" / "java" / "Calculator.java"
-        if not source.exists():
-            return {"success": False, "message": "Calculator.java is missing."}
-        text = source.read_text(encoding="utf-8")
-        missing = [
-            method
-            for method in ("add", "subtract", "multiply", "divide")
-            if f"int {method}(int a, int b)" not in text
-        ]
-        if missing:
-            return {
-                "success": False,
-                "message": "Missing methods required by JUnit tests: " + ", ".join(missing),
-                "missing_methods": missing,
-            }
-        if "if (b == 0)" not in text:
-            return {
-                "success": False,
-                "message": "divide should reject division by zero.",
-                "missing_methods": ["divide_zero_guard"],
-            }
-        return {"success": True, "message": "Simulated JUnit 5 tests passed."}
+        sources = list((project_root / "src" / "main" / "java").rglob("*.java"))
+        tests = list((project_root / "src" / "test" / "java").rglob("*.java"))
+        if not sources:
+            return {"success": False, "message": "No production Java files were generated."}
+        if not tests:
+            return {"success": False, "message": "No JUnit test files were generated."}
+        return {
+            "success": True,
+            "message": "Simulated tool check passed: production and test Java files exist.",
+        }
 
     def _run_real_junit(self, project_root: Path) -> dict[str, object]:
         javac = shutil.which("javac")
@@ -69,8 +57,12 @@ class JavaTestTool:
 
         build_dir = project_root / "build" / "classes"
         build_dir.mkdir(parents=True, exist_ok=True)
-        sources = list((project_root / "src" / "main" / "java").glob("*.java"))
-        tests = list((project_root / "src" / "test" / "java").glob("*.java"))
+        sources = list((project_root / "src" / "main" / "java").rglob("*.java"))
+        tests = list((project_root / "src" / "test" / "java").rglob("*.java"))
+        if not sources:
+            return {"success": False, "message": "No production Java files were generated.", "phase": "compile"}
+        if not tests:
+            return {"success": False, "message": "No JUnit test files were generated.", "phase": "compile"}
         compile_cmd = [
             javac,
             "-cp",

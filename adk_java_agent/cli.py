@@ -6,6 +6,7 @@ from pathlib import Path
 from .agents import AgentContext
 from .coding_agents import build_java_coding_agent
 from .explanations import ExplanationStore
+from .llm import build_llm_client
 from .tools import JavaToolConfig
 
 
@@ -17,6 +18,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--junit-jar", default=None, help="Path to junit-platform-console-standalone jar.")
     parser.add_argument("--simulate-tools", action="store_true", help="Use deterministic local test simulation.")
     parser.add_argument("--max-cycles", type=int, default=20)
+    parser.add_argument("--llm-provider", choices=["ollama", "openai-compatible"], default="ollama")
+    parser.add_argument("--model", default="llama3.1", help="Model name for the selected LLM provider.")
+    parser.add_argument("--api-base", default=None, help="LLM API base URL.")
+    parser.add_argument("--api-key-env", default="OPENAI_API_KEY", help="Environment variable for API key.")
+    parser.add_argument("--llm-timeout", type=int, default=600, help="Seconds to wait for each LLM request.")
     return parser.parse_args()
 
 
@@ -25,10 +31,18 @@ def main() -> int:
     project_root = Path(args.project_root).resolve()
     db_path = Path(args.db).resolve() if args.db else project_root / "explanations.sqlite"
     store = ExplanationStore(db_path)
+    llm = build_llm_client(
+        args.llm_provider,
+        args.model,
+        args.api_base,
+        args.api_key_env,
+        args.llm_timeout,
+    )
     context = AgentContext(
         task=args.task,
         project_root=project_root,
         explanation_store=store,
+        llm=llm,
         max_cycles=args.max_cycles,
     )
     agent = build_java_coding_agent(

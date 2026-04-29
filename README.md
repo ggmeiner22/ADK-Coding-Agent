@@ -1,10 +1,14 @@
 # ADK Java Coding Agent
 
-This folder contains a small ADK-style coding agent that generates a Java
-program, creates JUnit 5 tests, runs real Java/JUnit tools, improves the code
-from failures, and records explanations in SQLite.
+This project implements a small ADK-style Java coding agent. It asks an LLM to
+generate Java production code, asks another LLM step to generate JUnit 5 tests,
+runs real Java/JUnit tools, asks an improvement LLM step to fix failures, and
+stores explanations in a local SQLite database.
 
-The implemented agent structure is:
+The Java code and JUnit tests are not hard coded. They are produced from the task
+prompt by the LLM backend you configure.
+
+The agent structure is:
 
 ```text
 SequentialAgent(
@@ -24,24 +28,54 @@ test results, and unified diffs for file changes.
 
 ## Requirements
 
-Run these commands from **Command Prompt**.
+These commands assume you are already in WSL Linux and already inside this
+project directory.
 
-You need:
+Check Java and Python:
 
-- `python3`
-- `java` and `javac`
-- The included JUnit jar:
-> tools\junit-platform-console-standalone-1.10.2.jar
+```bash
+python3 --version
+java -version
+javac -version
+```
 
+The JUnit 5 Console Standalone jar is included here:
 
-## Execution
+```text
+tools/junit-platform-console-standalone-1.10.2.jar
+```
+
+You also need an LLM backend. The default is local Ollama.
+
+Check Ollama:
+
+```bash
+curl http://127.0.0.1:11434/api/tags
+```
+
+If needed, pull a model:
+
+```bash
+ollama pull llama3.1
+```
+
+Then run the model:
+```bash
+ollama run llama3.1
+```
+
+## Run the Agent with Ollama
 
 ```bash
 python3 -m adk_java_agent.cli \
+  --llm-provider ollama \
+  --model llama3.1 \
+  --llm-timeout 900 \
   --project-root runs/my-demo \
   --junit-jar tools/junit-platform-console-standalone-1.10.2.jar \
   --task "Create a Calculator class with add, subtract, multiply, and divide"
 ```
+> May need to wait around 10-15 minutes...
 
 Expected output:
 
@@ -52,20 +86,37 @@ project_root=.../runs/my-demo
 explanations_db=.../runs/my-demo/explanations.sqlite
 ```
 
-The generated Java files will be in:
+Generated Java files are written under:
 
 ```text
-runs\my-demo\src\main\java\Calculator.java
-runs\my-demo\src\test\java\CalculatorTest.java
+runs/my-demo/src/main/java/
+runs/my-demo/src/test/java/
 ```
 
-The explanation database will be:
+## Run with an OpenAI-Compatible API
 
-```text
-runs\my-demo\explanations.sqlite
+Set an API key:
+
+```bash
+export OPENAI_API_KEY="your-key-here"
 ```
 
-## 3. Browse the Explanation Database
+Then run:
+
+```bash
+python3 -m adk_java_agent.cli \
+  --llm-provider openai-compatible \
+  --model gpt-4.1-mini \
+  --api-base https://api.openai.com/v1 \
+  --project-root runs/my-demo \
+  --junit-jar tools/junit-platform-console-standalone-1.10.2.jar \
+  --task "Create a Calculator class with add, subtract, multiply, and divide"
+```
+
+For a different OpenAI-compatible service, change `--api-base`, `--model`, and
+optionally `--api-key-env`.
+
+## Browse Explanations
 
 Start the web viewer:
 
@@ -73,36 +124,43 @@ Start the web viewer:
 python3 -m adk_java_agent.web \
   --db runs/my-demo/explanations.sqlite \
   --port 8765
-
 ```
 
-Then open this address in a browser:
+Open this URL in your browser:
 
 ```text
 http://127.0.0.1:8765
 ```
 
-Leave the Command Prompt window open while using the browser. Press `Ctrl+C` in
-that window to stop the web viewer.
+Leave the terminal open while browsing. Press `Ctrl+C` to stop the web viewer.
 
-## Optional: Run Without Java
+Entries that created or changed files include an expanded `Diff` section.
 
-This mode uses the built-in simulated test tool. It is useful if Java is not
-available, but the real Java/JUnit command above is preferred.
+## Optional: Simulated Tool Mode
+
+This still uses the LLM for code and tests, but it does not run `javac` or JUnit.
+It only checks that production and test Java files were generated.
 
 ```bash
-python3 -m adk_java_agent.cli --simulate-tools --project-root runs/local-demo --task \"Create a Calculator class with add, subtract, multiply, and divide\""
+python3 -m adk_java_agent.cli \
+  --llm-provider ollama \
+  --model llama3.1 \
+  --simulate-tools \
+  --project-root runs/local-demo \
+  --task "Create a small Java Stack class with push, pop, peek, and isEmpty"
 ```
 
-## Clean Generated Runs
+## Clean Generated Output
 
-The agent creates output under `runs`. To remove generated demos:
+The agent writes generated projects under `runs/`.
 
-```cmd
-rmdir /s /q runs
+```bash
+rm -rf runs
 ```
 
-Do not delete `adk_java_agent` or `tools`; those are required to run the program.
+Do not delete `adk_java_agent/` or `tools/`; those are required to run the
+program.
+
 
 ## Contex Demo
 ![#1 first-version modularization](images/image-3.png)

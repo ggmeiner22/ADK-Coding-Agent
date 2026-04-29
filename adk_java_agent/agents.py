@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Callable, Protocol
 
 from .explanations import ExplanationStore
+from .llm import LlmClient
 
 
 @dataclass
@@ -20,6 +21,7 @@ class AgentContext:
     task: str
     project_root: Path
     explanation_store: ExplanationStore
+    llm: LlmClient
     max_cycles: int = 20
     cycle: int = 0
     state: dict[str, object] = field(default_factory=dict)
