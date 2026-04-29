@@ -36,10 +36,8 @@ You need:
 - `python3`
 - `java` and `javac`
 - The included JUnit jar:
+> tools\junit-platform-console-standalone-1.10.2.jar
 
-```text
-tools\junit-platform-console-standalone-1.10.2.jar
-```
 
 ## Execution
 
