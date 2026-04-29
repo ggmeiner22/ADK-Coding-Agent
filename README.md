@@ -103,3 +103,11 @@ rmdir /s /q runs
 ```
 
 Do not delete `adk_java_agent` or `tools`; those are required to run the program.
+
+## Contex Demo
+![#1 first-version modularization](images/image-3.png)
+![#2 first-version data_structure_selection](images/image-4.png)
+![#3 junit5-tests-devel test_design](images/image-5.png)
+![#4 and #5](images/image-6.png)
+![#6 and #7](images/image-7.png)
+![#8 and #9](images/image-8.png)
