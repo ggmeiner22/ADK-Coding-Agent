@@ -42,7 +42,10 @@ You need:
 ## Execution
 
 ```bash
-python3 -m adk_java_agent.cli --project-root runs/my-demo --junit-jar tools/junit-platform-console-standalone-1.10.2.jar --task \"Create a Calculator class with add, subtract, multiply, and divide\""
+python3 -m adk_java_agent.cli \
+  --project-root runs/my-demo \
+  --junit-jar tools/junit-platform-console-standalone-1.10.2.jar \
+  --task "Create a Calculator class with add, subtract, multiply, and divide"
 ```
 
 Expected output:
@@ -72,7 +75,10 @@ runs\my-demo\explanations.sqlite
 Start the web viewer:
 
 ```bash
-python3 -m adk_java_agent.web --db runs/my-demo/explanations.sqlite --port 8765"
+python3 -m adk_java_agent.web \
+  --db runs/my-demo/explanations.sqlite \
+  --port 8765
+
 ```
 
 Then open this address in a browser:
